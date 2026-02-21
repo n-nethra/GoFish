@@ -1,21 +1,22 @@
 import { ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef } from "react";
 import { Animated, StyleSheet, View, Dimensions, Image } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { auth } from "../firebaseConfig";
 import { DarkTheme, LightTheme } from "../theme";
 
 export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-const { width } = Dimensions.get("window");
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  // Splash
   const [showSplash, setShowSplash] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current; // fade out
@@ -23,6 +24,17 @@ export default function RootLayout() {
   const fishXAnim = useRef(new Animated.Value(-100)).current; // fish horizontal
   const fishYAnim = useRef(new Animated.Value(0)).current; // fish bobbing
 
+  // Auth state
+  const [user, setUser] = useState(auth.currentUser);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Splash animation
   useEffect(() => {
     // Title bobbing loop
     Animated.loop(
@@ -112,12 +124,22 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : LightTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {user ? (
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        ) : (
+          <>
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="signup" options={{ headerShown: false }} />
+            <Redirect href="/login" />
+          </>
+        )}
+
         <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
       </Stack>
+
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>
   );
