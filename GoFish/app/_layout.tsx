@@ -1,8 +1,8 @@
 import { ThemeProvider } from "@react-navigation/native";
 import { Redirect, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef } from "react";
-import { Animated, StyleSheet, View, Dimensions, Image } from "react-native";
+import { useEffect, useState } from "react";
+import { Animated, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -18,11 +18,8 @@ export default function RootLayout() {
 
   // Splash
   const [showSplash, setShowSplash] = useState(true);
-
-  const fadeAnim = useRef(new Animated.Value(1)).current; // fade out
-  const bobAnim = useRef(new Animated.Value(0)).current; // title bobbing
-  const fishXAnim = useRef(new Animated.Value(-100)).current; // fish horizontal
-  const fishYAnim = useRef(new Animated.Value(0)).current; // fish bobbing
+  const fadeAnim = new Animated.Value(0);
+  const waveAnim = new Animated.Value(0);
 
   // Auth state
   const [user, setUser] = useState(auth.currentUser);
@@ -36,88 +33,57 @@ export default function RootLayout() {
 
   // Splash animation
   useEffect(() => {
-    // Title bobbing loop
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1200,
+      useNativeDriver: true,
+    }).start();
+
     Animated.loop(
       Animated.sequence([
-        Animated.timing(bobAnim, {
-          toValue: -10,
-          duration: 600,
+        Animated.timing(waveAnim, {
+          toValue: 1,
+          duration: 1000,
           useNativeDriver: true,
         }),
-        Animated.timing(bobAnim, {
+        Animated.timing(waveAnim, {
           toValue: 0,
-          duration: 600,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // Fish horizontal swim loop
-    Animated.loop(
-      Animated.timing(fishXAnim, {
-        toValue: width + 100,
-        duration: 4000,
-        useNativeDriver: true,
-      })
-    ).start();
-
-    // Fish vertical bobbing loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(fishYAnim, {
-          toValue: -15,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fishYAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Splash timeout with fade out
     const timeout = setTimeout(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }).start(() => setShowSplash(false));
-    }, 2500);
+      setShowSplash(false);
+    }, 2000);
 
     return () => clearTimeout(timeout);
   }, []);
 
   if (showSplash) {
     return (
-      <Animated.View style={[styles.splashContainer, { opacity: fadeAnim }]}>
-        <Animated.Text
-          style={[
-            styles.title,
-            {
-              transform: [{ translateY: bobAnim }],
-            },
-          ]}
-        >
+      <View style={styles.splashContainer}>
+        <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>
           GoFish
         </Animated.Text>
 
-        {/* Fish swimming */}
-        <Animated.Image
-          source={require("../assets/images/fish.png")}
+        <Animated.View
           style={[
-            styles.fish,
+            styles.water,
             {
               transform: [
-                { translateX: fishXAnim },
-                { translateY: fishYAnim },
+                {
+                  translateY: waveAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 10],
+                  }),
+                },
               ],
             },
           ]}
-          resizeMode="contain"
         />
-      </Animated.View>
+      </View>
     );
   }
 
@@ -155,12 +121,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 52,
     fontWeight: "bold",
-    color: "#ECA400",
+    color: "white",
+    marginBottom: 20,
   },
-  fish: {
-    width: 80,
-    height: 50,
-    position: "absolute",
-    bottom: 250, // fish is higher now
+  water: {
+    width: 200,
+    height: 20,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 20,
   },
 });
