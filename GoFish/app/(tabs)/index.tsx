@@ -4,14 +4,15 @@ import { View, Button, StyleSheet } from "react-native";
 export default function Home({ navigation }: any) {
   return (
     <View style={styles.container}>
+
       <Button
         title="Apartment"
-        onPress={() => navigation.navigate("Apartments")}
+        onPress={() => navigation.navigate("apartments")}
       />
 
       <Button
         title="Roommate"
-        onPress={() => navigation.navigate("Roommates")}
+        onPress={() => navigation.navigate("roommates")}
       />
     </View>
   );

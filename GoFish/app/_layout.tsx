@@ -6,9 +6,16 @@ import 'react-native-reanimated';
 import { LightTheme, DarkTheme } from '../theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+import * as SplashScreen from 'expo-splash-screen';
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+SplashScreen.setOptions({
+  duration: 1000,
+  fade: true,
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
