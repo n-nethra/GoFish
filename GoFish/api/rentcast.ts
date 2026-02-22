@@ -1,19 +1,21 @@
-import axios from "axios";
-
 const BASE_URL = "https://api.rentcast.io/v1";
+const API_KEY = "e2540f57b4044ad4ba508b3671e8ba43";
 
 export const searchListings = async (filters: any) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/listings/search`, {
-      params: filters,
+  const queryString = new URLSearchParams(filters).toString();
+
+  const response = await fetch(
+    `${BASE_URL}/properties?${queryString}`,
+    {
       headers: {
-        Authorization: `Bearer YOUR_API_KEY`,
+        "X-Api-Key": "e2540f57b4044ad4ba508b3671e8ba43",
         Accept: "application/json",
       },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Rentcast API Error", error);
-    return null;
-  }
+    }
+  );
+
+  const data = await response.json();
+  console.log("RENTCAST RAW RESPONSE:", data);
+
+  return data;
 };
