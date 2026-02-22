@@ -1,19 +1,23 @@
-import React from "react";
 import { View, Button, StyleSheet } from "react-native";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase/firebaseConfig";
+import { router } from "expo-router";
 
-export default function Home({ navigation }: any) {
+export async function logout() {
+  try {
+    await signOut(auth);
+    router.replace("/login");
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+}
+
+export default function Profile() {
   return (
     <View style={styles.container}>
-
-      <Button
-        title="Apartment"
-        onPress={() => navigation.navigate("apartments")}
-      />
-
-      <Button
-        title="Roommate"
-        onPress={() => navigation.navigate("roommates")}
-      />
+      <Button title="Apartment" onPress={() => router.push("/apartments")} />
+      <Button title="Roommate" onPress={() => router.push("/roommates")} />
+      <Button title="Log out" onPress={logout} />
     </View>
   );
 }

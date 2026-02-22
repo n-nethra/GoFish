@@ -1,8 +1,9 @@
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
-import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Text, TextInput, View, Pressable } from "react-native";
 import { auth } from "../firebase/firebaseConfig";
+import { globalStyles } from "@/styles/globalStyles";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -22,29 +23,39 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <View style={globalStyles.container}>
+      <Text style={globalStyles.title}>Login</Text>
 
       <TextInput
-        style={styles.input}
+        style={globalStyles.input}
         placeholder="Email"
+        placeholderTextColor="#ccc"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
       />
 
       <TextInput
-        style={styles.input}
+        style={globalStyles.input}
         placeholder="Password"
+        placeholderTextColor="#ccc"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <Button title={loading ? "Logging in..." : "Login"} onPress={handleLogin} />
+      <Pressable
+        style={[globalStyles.button, { backgroundColor: "#006992", paddingVertical: 12, borderRadius: 8, alignItems: "center" }]}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={{ color: "#EAF8BF", fontWeight: "bold" }}>
+          {loading ? "Logging in..." : "Log In"}
+        </Text>
+      </Pressable>
 
       <Text
-        style={styles.link}
+        style={globalStyles.link}
         onPress={() => router.push("/signup")}
       >
         Don’t have an account? Sign up
@@ -52,29 +63,3 @@ export default function Login() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  link: {
-    marginTop: 10,
-    color: "blue",
-    textAlign: "center",
-  },
-});
