@@ -29,6 +29,15 @@ export const globalStyles = StyleSheet.create({
     color: "#EAF8BF",
   },
 
+  section: {
+    padding: 10,
+    marginTop: 12,
+    marginBottom: 6,
+    color: "#ECA400",
+    fontSize: 20,
+    fontWeight: "bold",
+  },  
+
   button: {
     marginVertical: 10,
     color: "#006992",
@@ -38,7 +47,7 @@ export const globalStyles = StyleSheet.create({
   paragraphText:{
     color: '#EAF8BF',
     fontSize: 18,
-
+    marginBottom: 20,
   },
 
   link: {
