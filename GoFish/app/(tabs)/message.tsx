@@ -1,30 +1,51 @@
 //messaging screen (all DMs shown here)
 
 import { useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { db } from "../../firebase/firebaseConfig";
+import { auth, db } from "../../firebase/firebaseConfig";
+
+type MatchItem = {
+  id: string;
+  otherName: string;
+};
 
 export default function Messages() {
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<MatchItem[]>([]);
   const router = useRouter();
-  const currentUserId = "CURRENT_USER_ID"; // Replace with actual user ID
+  const currentUserId = auth.currentUser?.uid;
 
   useEffect(() => {
     const fetchMatches = async () => {
+      if (!currentUserId) return;
+
       const snapshot = await getDocs(collection(db, "matches"));
-      const filtered = snapshot.docs
-        .map(doc => {
-          const data = doc.data() as { users?: string[] };
-          return { id: doc.id, ...data };
-        })
-        .filter(match => Array.isArray(match.users) && match.users.includes(currentUserId));
-      setMatches(filtered);
+      const items: MatchItem[] = [];
+
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data() as { users?: string[] };
+        const users = data.users || [];
+
+        if (users.includes(currentUserId)) {
+          const otherId = users.find(id => id !== currentUserId);
+
+          if (otherId) {
+            const userDoc = await getDoc(doc(db, "users", otherId));
+            const userData = userDoc.data() as { name?: string };
+
+            if (userData?.name) {
+              items.push({ id: docSnap.id, otherName: userData.name });
+            }
+          }
+        }
+      }
+
+      setMatches(items);
     };
 
     fetchMatches();
-  }, []);
+  }, [currentUserId]);
 
   return (
     <View style={styles.container}>
@@ -35,13 +56,10 @@ export default function Messages() {
           <TouchableOpacity
             style={styles.chatItem}
             onPress={() =>
-              router.push({
-                pathname: "/(tabs)/chat",
-                params: { matchId: item.id },
-              })
+              router.push({ pathname: "/chat", params: { matchId: item.id } })
             }
           >
-            <Text style={styles.chatText}>Chat</Text>
+            <Text style={styles.chatText}>{item.otherName}</Text>
           </TouchableOpacity>
         )}
       />
@@ -56,9 +74,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     marginBottom: 15,
+    justifyContent: "center",
   },
   chatText: {
     fontSize: 18,
     fontWeight: "600",
+    marginTop: 6,
   },
 });

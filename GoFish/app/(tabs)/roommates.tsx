@@ -1,85 +1,100 @@
 //roommates screen
 
-import { useRouter } from "expo-router";
+import { MaterialIcons } from "@expo/vector-icons";
 import { addDoc, collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
-import Swiper from "react-native-deck-swiper";
-import { db } from "../../firebase/firebaseConfig";
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, View } from "react-native";
+import { auth, db } from "../../firebase/firebaseConfig";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 export default function Roommates() {
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const router = useRouter();
+  const [users, setUsers] = useState<any[]>([]);
+  const position = new Animated.ValueXY();
 
-  const currentUserId = "CURRENT_USER_ID"; // replace later with auth
+  const currentUserId = auth.currentUser?.uid;
 
   useEffect(() => {
-    const fetchProfiles = async () => {
-      const snapshot = await getDocs(collection(db, "users"));
-      const users = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setProfiles(users);
+    const fetchUsers = async () => {
+      const snap = await getDocs(collection(db, "users"));
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(list);
     };
 
-    fetchProfiles();
+    fetchUsers();
   }, []);
 
-  const handleMatch = async (matchedUser: any) => {
-    await addDoc(collection(db, "matches"), {
-      users: [currentUserId, matchedUser.id],
-      createdAt: new Date(),
+  const swipe = async (direction: "left" | "right") => {
+    const swipedUser = users[0];
+    if (!swipedUser || !currentUserId) return;
+
+    if (direction === "right") {
+      await addDoc(collection(db, "matches"), {
+        users: [currentUserId, swipedUser.id],
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    Animated.timing(position, {
+      toValue: { x: direction === "right" ? SCREEN_WIDTH : -SCREEN_WIDTH, y: 0 },
+      duration: 250,
+      useNativeDriver: false,
+    }).start(() => {
+      position.setValue({ x: 0, y: 0 });
+      setUsers(prev => prev.slice(1));
     });
   };
 
+  const resetPosition = () => {
+    Animated.spring(position, {
+      toValue: { x: 0, y: 0 },
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderMove: Animated.event(
+      [null, { dx: position.x, dy: position.y }],
+      { useNativeDriver: false }
+    ),
+    onPanResponderRelease: (e, gesture) => {
+      if (gesture.dx > 120) swipe("right");
+      else if (gesture.dx < -120) swipe("left");
+      else resetPosition();
+    },
+  });
+
+  if (!users.length) {
+    return <Text style={styles.empty}>No roommates found.</Text>;
+  }
+
+  const top = users[0];
+
   return (
     <View style={styles.container}>
-      <Swiper
-        cards={profiles}
-        renderCard={(card) => {
-          if (!card) return <Text>No more profiles</Text>;
-          return (
-            <View style={styles.card}>
-              <Image
-                source={{ uri: "https://i.pravatar.cc/300" }}
-                style={styles.avatar}
-              />
-              <Text style={styles.name}>{card.name}</Text>
-              <Text>Cleanliness: {card.preferences?.cleanliness}</Text>
-              <Text>Noise: {card.preferences?.noiseLevel}</Text>
-              <Text>Sleep: {card.preferences?.sleepSchedule}</Text>
-            </View>
-          );
-        }}
-        onSwipedRight={(index) => handleMatch(profiles[index])}
-        onSwipedLeft={() => {}}
-        backgroundColor="#001D4A"
-        stackSize={3}
-      />
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[styles.card, position.getLayout()]}
+      >
+        <MaterialIcons name="person" size={48} color="#006992" style={styles.icon} />
+        <Text style={styles.name}>{top.name}</Text>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#001D4A" },
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
   card: {
-    flex: 0.8,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
+    width: "90%",
     padding: 20,
-    justifyContent: "center",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    elevation: 4,
     alignItems: "center",
   },
-  avatar: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 20,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
+  icon: { marginBottom: 10 },
+  name: { fontSize: 22, fontWeight: "bold" },
+  empty: { textAlign: "center", marginTop: 50 },
 });
