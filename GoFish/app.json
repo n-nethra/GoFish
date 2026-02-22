@@ -4,7 +4,7 @@
     "slug": "GoFish",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/gofishlogo.png",
     "scheme": "gofish",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
