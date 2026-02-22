@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 
+import { useRouter } from "expo-router";
 import { searchListings } from "../../api/rentcast";
 
 export default function ApartmentSearch() {
@@ -20,67 +21,70 @@ export default function ApartmentSearch() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [listings, setListings] = useState<any[]>([]);
+  const router = useRouter();
 
   const handleSearch = async () => {
-    const filters = {
-      city: "Austin",
-      state: "TX",
-      propertyType: "Apartment",
-      limit: 20,
-    };
+  if (!city) return;
 
-  
-    if (city) filters.city = city;
-    //if (beds) filters.beds = beds;
-    //if (baths) filters.baths = baths;
-    //if (minPrice) filters.min_rent = minPrice;
-    //if (maxPrice) filters.max_rent = maxPrice;
+  const filters: any = {
+    city: city,
+    propertyType: "Apartment",
+    limit: 20,
+  };
 
-    try {
-      const result = await searchListings(filters);
-      console.log("API RESPONSE:", result);
+  try {
+    const result = await searchListings(filters);
+    console.log("API RESPONSE:", result);
 
-      let items: any[] = [];
-      if (!result) items = [];
-      else if (Array.isArray(result)) items = result;
-      else if (Array.isArray(result.listings)) items = result.listings;
-      else if (Array.isArray(result.data)) items = result.data;
-      else if (Array.isArray(result.results)) items = result.results;
-      else if (Array.isArray(result.items)) items = result.items;
-      else items = [];
-
-      setListings(items);
-    } catch (err) {
-      console.error("Search error:", err);
+    if (Array.isArray(result)) {
+      setListings(result);
+    } else if (Array.isArray(result?.data)) {
+      setListings(result.data);
+    } else {
       setListings([]);
+    }
+  } catch (err) {
+    console.error("Search error:", err);
+    setListings([]);
     }
   };
 
-  const renderItem = ({ item }: any) => {
-  const price = item?.price ?? item?.rent ?? null;
+const renderItem = ({ item }: any) => {
+  const bedrooms = item?.bedrooms ?? "?";
+  const bathrooms = item?.bathrooms ?? "?";
+  const sqft = item?.squareFootage ?? "N/A";
+  const address = item?.formattedAddress ?? "No address available";
 
   return (
-    <View style={styles.card}>
-      <Image
-        source={{ uri: item?.primary_photo }}
-        style={styles.image}
-      />
-      <View style={styles.details}>
-        <Text style={styles.price}>
-          {price ? `$${Number(price).toLocaleString()}` : "Price unavailable"}
-        </Text>
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: "/apartment-details",
+          params: { data: JSON.stringify(item) },
+        })
+      }
+    >
+      <View style={styles.card}>
+        <Image
+          source={{
+            uri: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2",
+          }}
+          style={styles.image}
+        />
 
-        <Text>
-          {item?.beds ?? "?"} bd • {item?.baths ?? "?"} ba
-        </Text>
+        <View style={styles.details}>
+          <Text style={styles.price}>Property Details</Text>
 
-        <Text>{item?.sqft ?? "N/A"} sqft</Text>
+          <Text>
+            {bedrooms} bd • {bathrooms} ba
+          </Text>
 
-        <Text>
-          {item?.address ?? item?.formattedAddress ?? "No address"}
-        </Text>
+          <Text>{sqft} sqft</Text>
+
+          <Text>{address}</Text>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
