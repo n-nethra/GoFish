@@ -3,29 +3,38 @@ import {
   View,
   Text,
   TextInput,
-  Button,
-  StyleSheet,
+  TouchableOpacity,
   Alert,
 } from "react-native";
-
-
 import { signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { router } from "expo-router";
 import { globalStyles } from "@/styles/globalStyles";
 
-export default function Index() {
-  const user = auth.currentUser;
-
+export default function Profile() {
+  const [user, setUser] = useState(auth.currentUser);
   const [name, setName] = useState("");
   const [sleepSchedule, setSleepSchedule] = useState("");
   const [cleanliness, setCleanliness] = useState("");
   const [noiseLevel, setNoiseLevel] = useState("");
   const [loading, setLoading] = useState(true);
-  
 
-  // 🔹 Load user profile from Firestore
+  // 🔹 Listen to auth state
+useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged((u) => {
+    setUser(u);
+  });
+  return unsubscribe;
+}, []);
+
+useEffect(() => {
+  if (user === null) {
+    router.replace("/login");
+  }
+}, [user]);
+
+  // 🔹 Load profile once user is available
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
@@ -50,7 +59,7 @@ export default function Index() {
     };
 
     loadProfile();
-  }, []);
+  }, [user]);
 
   const saveProfile = async () => {
     if (!user) return;
@@ -72,17 +81,15 @@ export default function Index() {
     }
   };
 
-  // 🔹 Logout
   const logout = async () => {
     await signOut(auth);
     router.replace("/login");
   };
 
-  if (!user) return null;
+  if (!user || loading) return <Text style={{ color: "#fff", textAlign: "center", marginTop: 50 }}>Loading...</Text>;
 
   return (
-    <View style={globalStyles.container}>
-      {/* User info */}
+    <View style={[globalStyles.container, { marginHorizontal: 10 }]}>
       <Text style={globalStyles.title}>Profile</Text>
       <Text style={globalStyles.section}>Email</Text>
       <Text style={globalStyles.paragraphText}>{user.email}</Text>
@@ -93,25 +100,21 @@ export default function Index() {
         value={name}
         onChangeText={setName}
         placeholder="Your name"
-      />
+      />  
 
-      {/* Preferences */}
       <Text style={globalStyles.section}>Preferences</Text>
-
       <TextInput
         style={globalStyles.input}
         placeholder="Morning or night person?"
         value={sleepSchedule}
         onChangeText={setSleepSchedule}
       />
-
       <TextInput
         style={globalStyles.input}
         placeholder="Clean or messy?"
         value={cleanliness}
         onChangeText={setCleanliness}
       />
-
       <TextInput
         style={globalStyles.input}
         placeholder="Quiet or noisy?"
@@ -119,11 +122,13 @@ export default function Index() {
         onChangeText={setNoiseLevel}
       />
 
-      <Button title="Save Preferences" onPress={saveProfile} />
+      <TouchableOpacity style={[globalStyles.button, { width: "75%", alignSelf: "center" }]} onPress={saveProfile}>
+        <Text style={globalStyles.buttonText}>Save Preferences</Text>
+      </TouchableOpacity>
 
-      <View style={{ marginTop: 20 }}>
-        <Button title="Log out" color="red" onPress={logout} />
-      </View>
+      <TouchableOpacity style={[globalStyles.button, { backgroundColor: "#b86323", marginTop: 30, width: "50%", alignSelf: "center", }]} onPress={logout}>
+        <Text style={globalStyles.buttonText}>Log out</Text>
+      </TouchableOpacity>
     </View>
   );
 }

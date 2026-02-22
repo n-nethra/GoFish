@@ -26,7 +26,7 @@ export default function Login() {
 
   return (
     <View style={globalStyles.container}>
-      <Text style={globalStyles.title}>Login</Text>
+      <Text style={[globalStyles.title, { paddingTop: 100, paddingBottom: 20 }]}>Login</Text>
 
       <TextInput
         style={globalStyles.input}
@@ -38,7 +38,7 @@ export default function Login() {
       />
 
       <TextInput
-        style={globalStyles.input}
+        style={[globalStyles.input, { marginBottom: 30 }]}
         placeholder="Password"
         placeholderTextColor="#ccc"
         value={password}
@@ -51,7 +51,7 @@ export default function Login() {
         onPress={handleLogin}
         disabled={loading}
       >
-        <Text style={{ color: "#EAF8BF", fontWeight: "bold" }}>
+        <Text style={{ color: "#EAF8BF", fontWeight: "bold", fontSize: 18 }}>
           {loading ? "Logging in..." : "Log In"}
         </Text>
       </Pressable>

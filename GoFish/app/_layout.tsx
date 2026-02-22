@@ -1,5 +1,3 @@
-//splash screen and navigation between auth and tabs
-
 import { ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -7,7 +5,6 @@ import "firebase/compat/auth";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, StyleSheet } from "react-native";
 import "react-native-reanimated";
-
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DarkTheme, LightTheme } from "../theme";
@@ -21,7 +18,11 @@ const { width } = Dimensions.get("window");
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? DarkTheme : LightTheme;
+
   const [showSplash, setShowSplash] = useState(true);
+
+  // 🔹 Refs to prevent splash from running twice
+  const hasShownSplash = useRef(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current; // Splash fade out
   const logoBobAnim = useRef(new Animated.Value(0)).current; // Logo bobbing
@@ -29,70 +30,55 @@ export default function RootLayout() {
   const fishYAnim = useRef(new Animated.Value(0)).current; // Fish vertical bobbing
 
   useEffect(() => {
+    if (hasShownSplash.current) return; // Already ran
+
+    hasShownSplash.current = true;
+
     // Logo bobbing loop
     Animated.loop(
       Animated.sequence([
-        Animated.timing(logoBobAnim, {
-          toValue: -10,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoBobAnim, {
-          toValue: 0,
-          duration: 600,
-          useNativeDriver: true,
-        }),
+        Animated.timing(logoBobAnim, { toValue: -10, duration: 600, useNativeDriver: true }),
+        Animated.timing(logoBobAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
       ])
     ).start();
 
     // Fish horizontal swimming loop
     Animated.loop(
-      Animated.timing(fishXAnim, {
-        toValue: width + 160, // fish width, moves offscreen right
-        duration: 3200,        // faster than 4000ms
-        useNativeDriver: true,
-      })
+      Animated.timing(fishXAnim, { toValue: width + 160, duration: 3200, useNativeDriver: true })
     ).start();
 
     // Fish vertical bobbing loop
     Animated.loop(
       Animated.sequence([
-        Animated.timing(fishYAnim, {
-          toValue: -15,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fishYAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fishYAnim, { toValue: -15, duration: 800, useNativeDriver: true }),
+        Animated.timing(fishYAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
       ])
     ).start();
 
-    // Splash fade-out timeout
+    // Splash fade-out
     const timeout = setTimeout(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }).start(() => setShowSplash(false));
+      Animated.timing(fadeAnim, { toValue: 0, duration: 800, useNativeDriver: true }).start(() =>
+        setShowSplash(false)
+      );
     }, 2500);
 
     return () => clearTimeout(timeout);
   }, []);
 
+  // 🔹 Splash screen
   if (showSplash) {
     return (
-      <Animated.View style={[styles.splashContainer, { opacity: fadeAnim, backgroundColor: theme.colors.background }]}>
-        {/* Logo */}
+      <Animated.View
+        style={[
+          styles.splashContainer,
+          { opacity: fadeAnim, backgroundColor: theme.colors.background },
+        ]}
+      >
         <Animated.Image
           source={require("../assets/images/gofishlogo.png")}
           style={[styles.logo, { transform: [{ translateY: logoBobAnim }] }]}
           resizeMode="contain"
         />
-
-        {/* Fish swimming */}
         <Animated.Image
           source={require("../assets/images/fish.png")}
           style={[
@@ -105,11 +91,18 @@ export default function RootLayout() {
     );
   }
 
+  // 🔹 Stack navigation after splash
   return (
     <ThemeProvider value={theme}>
       <Stack>
+        {/* Tabs */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+        {/* Auth screens */}
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="signup" options={{ headerShown: false }} />
       </Stack>
+
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>
   );
