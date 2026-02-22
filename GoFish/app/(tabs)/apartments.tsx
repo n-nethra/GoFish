@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 
+import { useRouter } from "expo-router";
 import { searchListings } from "../../api/rentcast";
 import { globalStyles } from "@/styles/globalStyles";
 
@@ -18,6 +19,7 @@ export default function ApartmentSearch() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [listings, setListings] = useState<any[]>([]);
+  const router = useRouter();
 
   const handleSearch = async () => {
     const filters: any = {
@@ -40,30 +42,70 @@ export default function ApartmentSearch() {
       setListings(items);
     } catch (err) {
       console.error("Search error:", err);
+  if (!city) return;
+
+  const filters: any = {
+    city: city,
+    propertyType: "Apartment",
+    limit: 20,
+  };
+
+  try {
+    const result = await searchListings(filters);
+    console.log("API RESPONSE:", result);
+
+    if (Array.isArray(result)) {
+      setListings(result);
+    } else if (Array.isArray(result?.data)) {
+      setListings(result.data);
+    } else {
       setListings([]);
+    }
+  } catch (err) {
+    console.error("Search error:", err);
+    setListings([]);
     }
   };
 
-  const renderItem = ({ item }: any) => {
-    const price = item?.price ?? item?.rent ?? null;
+const renderItem = ({ item }: any) => {
+  const bedrooms = item?.bedrooms ?? "?";
+  const bathrooms = item?.bathrooms ?? "?";
+  const sqft = item?.squareFootage ?? "N/A";
+  const address = item?.formattedAddress ?? "No address available";
 
-    return (
-      <View style={{ ...globalStyles.container, backgroundColor: "#FFFFFF", flexDirection: "row", borderRadius: 18, padding: 10, marginVertical: 8 }}>
+  return (
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: "/apartment-details",
+          params: { data: JSON.stringify(item) },
+        })
+      }
+    >
+      <View style={globalStyles.card}>
         <Image
-          source={{ uri: item?.primary_photo }}
-          style={{ width: 110, height: 90, borderRadius: 12 }}
+          source={{
+            uri: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2",
+          }}
+          style={globalStyles.cardImage}
         />
-        <View style={{ paddingLeft: 12, justifyContent: "center", flex: 1 }}>
-          <Text style={{ color: "#006992", fontWeight: "700", marginBottom: 4 }}>
-            {price ? `$${Number(price).toLocaleString()}` : "Price unavailable"}
+
+        <View style={globalStyles.cardDetails}>
+          <Text style={globalStyles.cardPrice}>Property Details</Text>
+
+          <Text>
+            {bedrooms} bd • {bathrooms} ba
           </Text>
-          <Text>{item?.beds ?? "?"} bd • {item?.baths ?? "?"} ba</Text>
-          <Text>{item?.sqft ?? "N/A"} sqft</Text>
-          <Text>{item?.address ?? item?.formattedAddress ?? "No address"}</Text>
+
+          <Text>{sqft} sqft</Text>
+
+          <Text>{address}</Text>
         </View>
       </View>
-    );
-  };
+    </TouchableOpacity>
+  );
+};
+  }
 
   return (
     <View style={{ ...globalStyles.container, marginTop: 20}}>
