@@ -1,3 +1,5 @@
+//signup screen
+
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";

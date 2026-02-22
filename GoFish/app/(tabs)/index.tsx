@@ -1,7 +1,9 @@
-import { View, Button, StyleSheet } from "react-native";
-import { signOut } from "firebase/auth";
-import { auth } from "../../firebase/firebaseConfig";
+//profile screen
+
 import { router } from "expo-router";
+import { signOut } from "firebase/auth";
+import { Button, StyleSheet, View } from "react-native";
+import { auth } from "../../firebase/firebaseConfig";
 
 export async function logout() {
   try {

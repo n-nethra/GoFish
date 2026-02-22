@@ -1,8 +1,13 @@
-import { ThemeProvider, useTheme } from "@react-navigation/native";
+//splash screen and navigation between auth and tabs
+
+import { ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef } from "react";
-import { Animated, StyleSheet, View, Dimensions, Image } from "react-native";
+import "firebase/compat/auth";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Dimensions, StyleSheet } from "react-native";
+import "react-native-reanimated";
+
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DarkTheme, LightTheme } from "../theme";
