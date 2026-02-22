@@ -4,9 +4,13 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import { User } from "firebase/auth";
+
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { auth } from "../firebaseConfig";
+import { auth } from "../firebase/firebaseConfig";
 import { DarkTheme, LightTheme } from "../theme";
 
 export const unstable_settings = {
@@ -22,14 +26,14 @@ export default function RootLayout() {
   const waveAnim = new Animated.Value(0);
 
   // Auth state
-  const [user, setUser] = useState(auth.currentUser);
+const [user, setUser] = useState<User | null | undefined>(undefined);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setUser(u);
-    });
-    return unsubscribe;
-  }, []);
+useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged((u) => {
+    setUser(u);
+  });
+  return unsubscribe;
+}, []);
 
   // Splash animation
   useEffect(() => {
@@ -93,17 +97,8 @@ export default function RootLayout() {
         {user ? (
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         ) : (
-          <>
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="signup" options={{ headerShown: false }} />
-            <Redirect href="/login" />
-          </>
+          <Stack.Screen name="login" options={{ headerShown: false }} />
         )}
-
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
       </Stack>
 
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
